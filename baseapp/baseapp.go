@@ -777,9 +777,50 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, mode runTxMode) (*s
 		return nil, sdkerrors.Wrap(err, "failed to marshal tx data")
 	}
 
-	return &sdk.Result{
+	result := sdk.Result{
 		Data:   data,
 		Log:    strings.TrimSpace(msgLogs.String()),
 		Events: events.ToABCIEvents(),
-	}, nil
+	}
+
+	if mode == runTxModeCheck || mode == runTxModeReCheck {
+		success := true
+		firstSubChainID := int32(0)
+		for inx, msg := range msgs {
+			m := reflect.ValueOf(&msg).MethodByName("Route")
+			if !m.IsValid() {
+				success = false
+				break
+			}
+			ret := m.Call([]reflect.Value{})
+			msg_route_key := ret[0].Interface().(string)
+			if msg_route_key != "dbchain" {
+				success = false
+				break
+			}
+
+			n := reflect.ValueOf(&msg).MethodByName("GetSubChainID")
+			if !n.IsValid() {
+				success = false
+				break
+			}
+			ret = n.Call([]reflect.Value{})
+			subChainID := ret[0].Interface().(int32)
+
+			if inx == 0 {
+				firstSubChainID = subChainID
+			} else {
+				if firstSubChainID != subChainID {
+					success = false
+					break
+				}
+			}
+		}
+		// if the SubChainId's are different, we don't set it
+		if success {
+			result.SubChainID = firstSubChainID
+		}
+	}
+
+	return &result, nil
 }

@@ -99,6 +99,9 @@ message Result {
   // Events contains a slice of Event objects that were emitted during message
   // or handler execution.
   repeated tendermint.abci.Event events = 3 [(gogoproto.nullable) = false];
+
+  // Return for abci CheckTx checking
+  int32 sub_chain_id = 4 [(gogoproto.customname) = "SubChainID"];
 }
 
 // SimulationResponse defines the response generated when a transaction is
