@@ -58,11 +58,16 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) Factory {
 	gasStr, _ := flagSet.GetString(flags.FlagGas)
 	gasSetting, _ := flags.ParseGasSetting(gasStr)
 
+	chainID, _ := flagSet.GetString(flags.FlagChainID)
+	if len(chainID) < 1 {
+		chainID = clientCtx.ChainID
+	}
+
 	f := Factory{
 		txConfig:           clientCtx.TxConfig,
 		accountRetriever:   clientCtx.AccountRetriever,
 		keybase:            clientCtx.Keyring,
-		chainID:            clientCtx.ChainID,
+		chainID:            chainID,
 		gas:                gasSetting.Gas,
 		simulateAndExecute: gasSetting.Simulate,
 		accountNumber:      accNum,
