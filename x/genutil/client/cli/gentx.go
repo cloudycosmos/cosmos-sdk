@@ -66,7 +66,12 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 			config := serverCtx.Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			nodeID, valPubKey, err := genutil.InitializeNodeValidatorFiles(serverCtx.Config)
+			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+			if chainID == "" {
+				chainID = "fake-chain-id-71"
+			}
+
+			nodeID, valPubKey, err := genutil.InitializeNodeValidatorFiles(serverCtx.Config, chainID)
 			if err != nil {
 				return errors.Wrap(err, "failed to initialize node validator files")
 			}
@@ -82,11 +87,6 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 					return errors.Wrap(err, "failed to unmarshal validator public key")
 				}
 			}
-
-                        chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
-                        if chainID == "" {
-                                chainID = "fake-chain-id"
-                        }
 
 			genDoc, err := tmtypes.GenesisDocFromFile(config.GenesisFile(chainID))
 			if err != nil {

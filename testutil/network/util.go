@@ -41,16 +41,20 @@ func startInProcess(cfg Config, val *Validator) error {
 	// Added by Yi
 	appMap := make(map[string]srvtypes.Application)
 	clientCreatorMap := make(map[string]proxy.ClientCreator)
+        privValidatorMap := make(map[string]types.PrivValidator)
 	for _, chainID := range tmconfig.GetAllChainIDs() {
 		app := cfg.AppConstructor(*val)
 		appMap[chainID] = app
 		clientCreatorMap[chainID] = proxy.NewLocalClientCreator(app)
+
+		privValidator := pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile(chainID))
+		privValidatorMap[chainID] = privValidator
 	}
 
 	genDocProvider := node.DefaultGenesisDocProviderFunc(tmCfg)
 	tmNode, err := node.NewNode(
 		tmCfg,
-		pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile()),
+		privValidatorMap,
 		nodeKey,
 		clientCreatorMap,
 		genDocProvider,

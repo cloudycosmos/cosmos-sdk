@@ -272,7 +272,8 @@ func New(t *testing.T, cfg Config) *Network {
 		tmCfg.P2P.AddrBookStrict = false
 		tmCfg.P2P.AllowDuplicateIP = true
 
-		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg)
+		chainID := "fake-chain-id-275"  // YITODO: we need a better way to get the chainID
+		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg, chainID)
 		require.NoError(t, err)
 		nodeIDs[i] = nodeID
 		valPubKeys[i] = pubKey
@@ -304,7 +305,6 @@ func New(t *testing.T, cfg Config) *Network {
 			sdk.NewCoin(cfg.BondDenom, cfg.StakingTokens),
 		)
 
-		chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
 		genFiles = append(genFiles, tmCfg.GenesisFile(chainID))
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))

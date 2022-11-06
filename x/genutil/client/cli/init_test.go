@@ -198,7 +198,8 @@ func TestStartStandAlone(t *testing.T) {
 func TestInitNodeValidatorFiles(t *testing.T) {
 	home := t.TempDir()
 	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
-	nodeID, valPubKey, err := genutil.InitializeNodeValidatorFiles(cfg)
+	chainID := "fake-chain-id-201"    // YITODO: need a better chainID
+	nodeID, valPubKey, err := genutil.InitializeNodeValidatorFiles(cfg, chainID)
 
 	require.Nil(t, err)
 	require.NotEqual(t, "", nodeID)

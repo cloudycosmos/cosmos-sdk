@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	tmtypes "github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/abci/server"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -274,14 +275,18 @@ func startInProcess(ctx *Context, clientCtx client.Context, appCreator types.App
 
 		// Added by Yi
 		localClientCreator := make(map[string]proxy.ClientCreator)
+		privValidatorMap := make(map[string]tmtypes.PrivValidator)
 		for _, chainID := range tmconfig.GetAllChainIDs() {
 			lcc := proxy.NewLocalClientCreator(app)
 			localClientCreator[chainID] = lcc
+
+			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(chainID))
+			privValidatorMap[chainID] = privValidator
 		}
 
 		tmNode, err = node.NewNode(
 			cfg,
-			pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile()),
+			privValidatorMap,
 			nodeKey,
 			//proxy.NewLocalClientCreator(app),
 			localClientCreator,
