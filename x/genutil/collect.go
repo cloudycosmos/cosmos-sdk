@@ -15,6 +15,7 @@ import (
 
 	cfg "github.com/tendermint/tendermint/config"
 	tmtypes "github.com/tendermint/tendermint/types"
+	tmos "github.com/tendermint/tendermint/libs/os"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -38,7 +39,11 @@ func GenAppStateFromConfig(cdc codec.JSONCodec, txEncodingConfig client.TxEncodi
 	}
 
 	config.P2P.PersistentPeers = persistentPeers
-	cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+
+	configFile := filepath.Join(config.RootDir, "config", "config.toml")
+	if !tmos.FileExists(configFile) {
+		cfg.WriteConfigFile(configFile, config)
+	}
 
 	// if there are no gen txs to be processed, return the default empty state
 	if len(appGenTxs) == 0 {
