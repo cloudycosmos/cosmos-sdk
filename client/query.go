@@ -129,6 +129,7 @@ func (ctx Context) query(path string, key tmbytes.HexBytes) ([]byte, int64, erro
 		Path:   path,
 		Data:   key,
 		Height: ctx.Height,
+		ChainID: ctx.ChainID,       // added by Yi
 	})
 	if err != nil {
 		return nil, 0, err
