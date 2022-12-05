@@ -6,11 +6,45 @@ import (
 	"google.golang.org/protobuf/encoding/protowire"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 )
+
+// Added by Yi
+// GetTxMemo copied code from DefaultTxDecoder to decode Tx and return tx.Body.Memo
+func GetTxMemo(txBytes []byte) string {
+	// Make sure txBytes follow ADR-027.
+	err := rejectNonADR027TxRaw(txBytes)
+	if err != nil {
+		return ""
+	}
+
+	var raw tx.TxRaw
+
+        registry := codectypes.NewInterfaceRegistry()
+        cdc := codec.NewProtoCodec(registry)
+
+	// reject all unknown proto fields in the root TxRaw
+	err = unknownproto.RejectUnknownFieldsStrict(txBytes, &raw, cdc.InterfaceRegistry())
+	if err != nil {
+		return ""
+	}
+
+	err = cdc.Unmarshal(txBytes, &raw)
+	if err != nil {
+		return ""
+	}
+
+	var body tx.TxBody
+
+	// this call may return err, but it'll fill the memo of the body anyway
+	cdc.Unmarshal(raw.BodyBytes, &body)
+
+	return body.Memo
+}
 
 // DefaultTxDecoder returns a default protobuf TxDecoder using the provided Marshaler.
 func DefaultTxDecoder(cdc codec.ProtoCodecMarshaler) sdk.TxDecoder {

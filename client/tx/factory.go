@@ -63,6 +63,10 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) Factory {
 		chainID = clientCtx.ChainID
 	}
 
+	if len(memo) < 1 {
+		memo = "chain_id:" + chainID
+	}
+
 	f := Factory{
 		txConfig:           clientCtx.TxConfig,
 		accountRetriever:   clientCtx.AccountRetriever,
