@@ -401,7 +401,8 @@ func (n *Network) LatestHeight() (int64, error) {
 	}
 
 	chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
-	status, err := n.Validators[0].RPCClient.Status(context.Background(), chainID)
+	myCtx := context.WithValue(context.Background(), "chain_id", chainID)
+	status, err := n.Validators[0].RPCClient.Status(myCtx)
 	if err != nil {
 		return 0, err
 	}
@@ -436,7 +437,8 @@ func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, err
 			return latestHeight, errors.New("timeout exceeded waiting for block")
 		case <-ticker.C:
 			chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
-			status, err := val.RPCClient.Status(context.Background(), chainID)
+			myCtx := context.WithValue(context.Background(), "chain_id", chainID)
+			status, err := val.RPCClient.Status(myCtx)
 			if err == nil && status != nil {
 				latestHeight = status.SyncInfo.LatestBlockHeight
 				if latestHeight >= h {

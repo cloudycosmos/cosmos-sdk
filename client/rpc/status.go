@@ -87,8 +87,8 @@ func getNodeStatus(clientCtx client.Context, chainID string) (*ctypes.ResultStat
 	if err != nil {
 		return &ctypes.ResultStatus{}, err
 	}
-
-	return node.Status(context.Background(), chainID)
+	myCtx := context.WithValue(context.Background(), "chain_id", chainID)
+	return node.Status(myCtx)
 }
 
 // NodeInfoResponse defines a response type that contains node status and version

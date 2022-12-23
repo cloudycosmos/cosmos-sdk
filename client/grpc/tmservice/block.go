@@ -15,8 +15,8 @@ func getBlock(ctx context.Context, clientCtx client.Context, height *int64) (*ct
 	if err != nil {
 		return nil, err
 	}
-
-	return node.Block(ctx, clientCtx.ChainID, height)
+	ctx = context.WithValue(ctx, "chain_id", clientCtx.ChainID)
+	return node.Block(ctx, height)
 }
 
 func GetProtoBlock(ctx context.Context, clientCtx client.Context, height *int64) (tmproto.BlockID, *tmproto.Block, error) {

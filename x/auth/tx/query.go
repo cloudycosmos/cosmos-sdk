@@ -44,7 +44,8 @@ func QueryTxsByEvents(clientCtx client.Context, events []string, page, limit int
 
 	// TODO: this may not always need to be proven
 	// https://github.com/cosmos/cosmos-sdk/issues/6807
-	resTxs, err := node.TxSearch(context.Background(), clientCtx.ChainID, query, true, &page, &limit, orderBy)
+	myCtx := context.WithValue(context.Background(), "chain_id", clientCtx.ChainID)
+	resTxs, err := node.TxSearch(myCtx, query, true, &page, &limit, orderBy)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +80,8 @@ func QueryTx(clientCtx client.Context, hashHexStr string) (*sdk.TxResponse, erro
 
 	//TODO: this may not always need to be proven
 	// https://github.com/cosmos/cosmos-sdk/issues/6807
-	resTx, err := node.Tx(context.Background(), clientCtx.ChainID, hash, true)
+	myCtx := context.WithValue(context.Background(), "chain_id", clientCtx.ChainID)
+	resTx, err := node.Tx(myCtx, hash, true)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +123,8 @@ func getBlocksForTxResults(clientCtx client.Context, resTxs []*ctypes.ResultTx) 
 
 	for _, resTx := range resTxs {
 		if _, ok := resBlocks[resTx.Height]; !ok {
-			resBlock, err := node.Block(context.Background(), clientCtx.ChainID, &resTx.Height)
+			myCtx := context.WithValue(context.Background(), "chain_id", clientCtx.ChainID)
+			resBlock, err := node.Block(myCtx, &resTx.Height)
 			if err != nil {
 				return nil, err
 			}

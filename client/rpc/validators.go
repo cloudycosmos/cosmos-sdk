@@ -124,8 +124,8 @@ func GetValidators(ctx context.Context, clientCtx client.Context, height *int64,
 	if err != nil {
 		return ResultValidatorsOutput{}, err
 	}
-
-	validatorsRes, err := node.Validators(ctx, clientCtx.ChainID, height, page, limit)
+	ctx = context.WithValue(ctx, "chain_id", clientCtx.ChainID)
+	validatorsRes, err := node.Validators(ctx, height, page, limit)
 	if err != nil {
 		return ResultValidatorsOutput{}, err
 	}

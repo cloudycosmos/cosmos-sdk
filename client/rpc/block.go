@@ -65,7 +65,8 @@ func getBlock(clientCtx client.Context, height *int64) ([]byte, error) {
 	// header -> BlockchainInfo
 	// header, tx -> Block
 	// results -> BlockResults
-	res, err := node.Block(context.Background(), clientCtx.ChainID, height)
+	myCtx := context.WithValue(context.Background(), "chain_id", clientCtx.ChainID)
+	res, err := node.Block(myCtx, height)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,8 @@ func GetChainHeight(clientCtx client.Context) (int64, error) {
 		return -1, err
 	}
 
-	status, err := node.Status(context.Background(), clientCtx.ChainID)
+	myCtx := context.WithValue(context.Background(), "chain_id", clientCtx.ChainID)
+	status, err := node.Status(myCtx)
 	if err != nil {
 		return -1, err
 	}

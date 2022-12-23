@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"context"
 
 	"github.com/spf13/cobra"
 
@@ -92,7 +93,8 @@ func GetAppliedPlanCmd() *cobra.Command {
 				return err
 			}
 			chainID := "fake-chain-id" // YITODO: need fix
-			headers, err := node.BlockchainInfo(ctx, chainID, res.Height, res.Height)
+			ctx = context.WithValue(ctx, "chain_id", chainID)
+			headers, err := node.BlockchainInfo(ctx, res.Height, res.Height)
 			if err != nil {
 				return err
 			}

@@ -91,7 +91,8 @@ func (ctx Context) queryABCI(req abci.RequestQuery) (abci.ResponseQuery, error) 
 		Prove:  req.Prove,
 	}
 
-	result, err := node.ABCIQueryWithOptions(context.Background(), req.ChainID, req.Path, req.Data, opts)
+	myCtx := context.WithValue(context.Background(), "chain_id", req.ChainID)
+	result, err := node.ABCIQueryWithOptions(myCtx, req.Path, req.Data, opts)
 	if err != nil {
 		return abci.ResponseQuery{}, err
 	}
