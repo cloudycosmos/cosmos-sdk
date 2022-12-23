@@ -83,9 +83,14 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 				}
 			}
 
-			genDoc, err := tmtypes.GenesisDocFromFile(config.GenesisFile())
+                        chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+                        if chainID == "" {
+                                chainID = "fake-chain-id"
+                        }
+
+			genDoc, err := tmtypes.GenesisDocFromFile(config.GenesisFile(chainID))
 			if err != nil {
-				return errors.Wrapf(err, "failed to read genesis doc file %s", config.GenesisFile())
+				return errors.Wrapf(err, "failed to read genesis doc file %s", config.GenesisFile(chainID))
 			}
 
 			var genesisState map[string]json.RawMessage
@@ -185,7 +190,12 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 
 			outputDocument, _ := cmd.Flags().GetString(flags.FlagOutputDocument)
 			if outputDocument == "" {
-				outputDocument, err = makeOutputFilepath(config.RootDir, nodeID)
+				chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+				if chainID == "" {
+					chainID = "fake-chain-id"
+				}
+
+				outputDocument, err = makeOutputFilepath(config.RootDir, chainID, nodeID)
 				if err != nil {
 					return errors.Wrap(err, "failed to create output file path")
 				}
@@ -209,8 +219,8 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 	return cmd
 }
 
-func makeOutputFilepath(rootDir, nodeID string) (string, error) {
-	writePath := filepath.Join(rootDir, "config", "gentx")
+func makeOutputFilepath(rootDir, chainID, nodeID string) (string, error) {
+	writePath := filepath.Join(rootDir, "config", "gentx", chainID)
 	if err := tmos.EnsureDir(writePath, 0700); err != nil {
 		return "", err
 	}

@@ -26,7 +26,7 @@ const (
 // ExportCmd dumps app state to JSON.
 func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export",
+		Use:   "export [chainID]",
 		Short: "Export state to JSON",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			serverCtx := GetServerContextFromCmd(cmd)
@@ -35,7 +35,8 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			config.SetRoot(homeDir)
 
-			if _, err := os.Stat(config.GenesisFile()); os.IsNotExist(err) {
+			chainID := args[0]
+			if _, err := os.Stat(config.GenesisFile(chainID)); os.IsNotExist(err) {
 				return err
 			}
 
@@ -49,7 +50,7 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 					return err
 				}
 
-				genesis, err := ioutil.ReadFile(config.GenesisFile())
+				genesis, err := ioutil.ReadFile(config.GenesisFile(chainID))
 				if err != nil {
 					return err
 				}
@@ -68,12 +69,12 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 			forZeroHeight, _ := cmd.Flags().GetBool(FlagForZeroHeight)
 			jailAllowedAddrs, _ := cmd.Flags().GetStringSlice(FlagJailAllowedAddrs)
 
-			exported, err := appExporter(serverCtx.Logger, db, traceWriter, height, forZeroHeight, jailAllowedAddrs, serverCtx.Viper)
+			exported, err := appExporter(chainID, serverCtx.Logger, db, traceWriter, height, forZeroHeight, jailAllowedAddrs, serverCtx.Viper)
 			if err != nil {
 				return fmt.Errorf("error exporting state: %v", err)
 			}
 
-			doc, err := tmtypes.GenesisDocFromFile(serverCtx.Config.GenesisFile())
+			doc, err := tmtypes.GenesisDocFromFile(serverCtx.Config.GenesisFile(chainID))
 			if err != nil {
 				return err
 			}

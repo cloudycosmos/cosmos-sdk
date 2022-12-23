@@ -14,7 +14,7 @@ import (
 // QueryGenesisTxs writes the genesis transactions to the response if no error
 // occurs.
 func QueryGenesisTxs(clientCtx client.Context, w http.ResponseWriter) {
-	resultGenesis, err := clientCtx.Client.Genesis(context.Background())
+	resultGenesis, err := clientCtx.Client.Genesis(context.Background(), clientCtx.ChainID)
 	if err != nil {
 		rest.WriteErrorResponse(
 			w, http.StatusInternalServerError,

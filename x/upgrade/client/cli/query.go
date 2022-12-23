@@ -91,7 +91,8 @@ func GetAppliedPlanCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			headers, err := node.BlockchainInfo(ctx, res.Height, res.Height)
+			chainID := "fake-chain-id" // YITODO: need fix
+			headers, err := node.BlockchainInfo(ctx, chainID, res.Height, res.Height)
 			if err != nil {
 				return err
 			}

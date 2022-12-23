@@ -304,7 +304,8 @@ func New(t *testing.T, cfg Config) *Network {
 			sdk.NewCoin(cfg.BondDenom, cfg.StakingTokens),
 		)
 
-		genFiles = append(genFiles, tmCfg.GenesisFile())
+		chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
+		genFiles = append(genFiles, tmCfg.GenesisFile(chainID))
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
@@ -399,7 +400,8 @@ func (n *Network) LatestHeight() (int64, error) {
 		return 0, errors.New("no validators available")
 	}
 
-	status, err := n.Validators[0].RPCClient.Status(context.Background())
+	chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
+	status, err := n.Validators[0].RPCClient.Status(context.Background(), chainID)
 	if err != nil {
 		return 0, err
 	}
@@ -433,7 +435,8 @@ func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, err
 			ticker.Stop()
 			return latestHeight, errors.New("timeout exceeded waiting for block")
 		case <-ticker.C:
-			status, err := val.RPCClient.Status(context.Background())
+			chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
+			status, err := val.RPCClient.Status(context.Background(), chainID)
 			if err == nil && status != nil {
 				latestHeight = status.SyncInfo.LatestBlockHeight
 				if latestHeight >= h {

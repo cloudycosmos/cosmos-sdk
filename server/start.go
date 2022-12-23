@@ -17,6 +17,7 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
+	tmconfig "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/rpc/client/local"
 	"google.golang.org/grpc"
 
@@ -184,7 +185,8 @@ func startStandAlone(ctx *Context, appCreator types.AppCreator) error {
 		return err
 	}
 
-	app := appCreator(ctx.Logger, db, traceWriter, ctx.Viper)
+	chainID := "fake-chain-id-188"    // YITODO: need a better chainID
+	app := appCreator(chainID, ctx.Logger, db, traceWriter, ctx.Viper)
 
 	svr, err := server.NewServer(addr, transport, app)
 	if err != nil {
@@ -249,7 +251,8 @@ func startInProcess(ctx *Context, clientCtx client.Context, appCreator types.App
 			"(SDK v0.45). Please explicitly put the desired minimum-gas-prices in your app.toml.")
 	}
 
-	app := appCreator(ctx.Logger, db, traceWriter, ctx.Viper)
+	chainID := "fake-chai-id-254"   // YITODO: need a better chainID
+	app := appCreator(chainID, ctx.Logger, db, traceWriter, ctx.Viper)
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
 	if err != nil {
@@ -269,11 +272,19 @@ func startInProcess(ctx *Context, clientCtx client.Context, appCreator types.App
 	} else {
 		ctx.Logger.Info("starting node with ABCI Tendermint in-process")
 
+		// Added by Yi
+		localClientCreator := make(map[string]proxy.ClientCreator)
+		for _, chainID := range tmconfig.GetAllChainIDs() {
+			lcc := proxy.NewLocalClientCreator(app)
+			localClientCreator[chainID] = lcc
+		}
+
 		tmNode, err = node.NewNode(
 			cfg,
 			pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile()),
 			nodeKey,
-			proxy.NewLocalClientCreator(app),
+			//proxy.NewLocalClientCreator(app),
+			localClientCreator,
 			genDocProvider,
 			node.DefaultDBProvider,
 			node.DefaultMetricsProvider(cfg.Instrumentation),
@@ -297,12 +308,14 @@ func startInProcess(ctx *Context, clientCtx client.Context, appCreator types.App
 
 	var apiSrv *api.Server
 	if config.API.Enable {
-		genDoc, err := genDocProvider()
-		if err != nil {
-			return err
-		}
+//		We will force the API to require chainID as parameter
+//		genDoc, err := genDocProvider()
+//		if err != nil {
+//			return err
+//		}
 
-		clientCtx := clientCtx.WithHomeDir(home).WithChainID(genDoc.ChainID)
+//		clientCtx := clientCtx.WithHomeDir(home).WithChainID(genDoc.ChainID)
+		clientCtx := clientCtx.WithHomeDir(home)
 
 		apiSrv = api.New(clientCtx, ctx.Logger.With("module", "api-server"))
 		app.RegisterAPIRoutes(apiSrv, config.API)

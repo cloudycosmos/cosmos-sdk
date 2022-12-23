@@ -18,7 +18,7 @@ import (
 // BlockCommand returns the verified block data for a given heights
 func BlockCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "block [height]",
+		Use:   "block [chainID] [height]",
 		Short: "Get verified data for a the block at given height",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -27,10 +27,10 @@ func BlockCommand() *cobra.Command {
 				return err
 			}
 			var height *int64
-
 			// optional height
-			if len(args) > 0 {
-				h, err := strconv.Atoi(args[0])
+			if len(args) > 1 {
+				clientCtx.ChainID = args[0]
+				h, err := strconv.Atoi(args[1])
 				if err != nil {
 					return err
 				}
@@ -65,7 +65,7 @@ func getBlock(clientCtx client.Context, height *int64) ([]byte, error) {
 	// header -> BlockchainInfo
 	// header, tx -> Block
 	// results -> BlockResults
-	res, err := node.Block(context.Background(), height)
+	res, err := node.Block(context.Background(), clientCtx.ChainID, height)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func GetChainHeight(clientCtx client.Context) (int64, error) {
 		return -1, err
 	}
 
-	status, err := node.Status(context.Background())
+	status, err := node.Status(context.Background(), clientCtx.ChainID)
 	if err != nil {
 		return -1, err
 	}
@@ -92,8 +92,11 @@ func GetChainHeight(clientCtx client.Context) (int64, error) {
 // REST handler to get a block
 func BlockRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
+		if len(r.Header["X-Dbc-Chainid"]) == 1 {
+			clientCtx.ChainID = r.Header["X-Dbc-Chainid"][0]
+		}
 
+		vars := mux.Vars(r)
 		height, err := strconv.ParseInt(vars["height"], 10, 64)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest,
@@ -124,6 +127,10 @@ func BlockRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 // REST handler to get the latest block
 func LatestBlockRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if len(r.Header["X-Dbc-Chainid"]) == 1 {
+			clientCtx.ChainID = r.Header["X-Dbc-Chainid"][0]
+		}
+
 		output, err := getBlock(clientCtx, nil)
 		if rest.CheckInternalServerError(w, err) {
 			return

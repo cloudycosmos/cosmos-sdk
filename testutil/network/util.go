@@ -12,6 +12,7 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/rpc/client/local"
 	"github.com/tendermint/tendermint/types"
+	tmconfig "github.com/tendermint/tendermint/config"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -37,14 +38,21 @@ func startInProcess(cfg Config, val *Validator) error {
 		return err
 	}
 
-	app := cfg.AppConstructor(*val)
+	// Added by Yi
+	appMap := make(map[string]srvtypes.Application)
+	clientCreatorMap := make(map[string]proxy.ClientCreator)
+	for _, chainID := range tmconfig.GetAllChainIDs() {
+		app := cfg.AppConstructor(*val)
+		appMap[chainID] = app
+		clientCreatorMap[chainID] = proxy.NewLocalClientCreator(app)
+	}
 
 	genDocProvider := node.DefaultGenesisDocProviderFunc(tmCfg)
 	tmNode, err := node.NewNode(
 		tmCfg,
 		pvm.LoadOrGenFilePV(tmCfg.PrivValidatorKeyFile(), tmCfg.PrivValidatorStateFile()),
 		nodeKey,
-		proxy.NewLocalClientCreator(app),
+		clientCreatorMap,
 		genDocProvider,
 		node.DefaultDBProvider,
 		node.DefaultMetricsProvider(tmCfg.Instrumentation),
@@ -69,16 +77,23 @@ func startInProcess(cfg Config, val *Validator) error {
 		val.ClientCtx = val.ClientCtx.
 			WithClient(val.RPCClient)
 
-		// Add the tx service in the gRPC router.
-		app.RegisterTxService(val.ClientCtx)
+		// Added by Yi
+		for _, app := range appMap {
+			// Add the tx service in the gRPC router.
+			app.RegisterTxService(val.ClientCtx)
 
-		// Add the tendermint queries service in the gRPC router.
-		app.RegisterTendermintService(val.ClientCtx)
+			// Add the tendermint queries service in the gRPC router.
+			app.RegisterTendermintService(val.ClientCtx)
+		}
 	}
 
 	if val.APIAddress != "" {
 		apiSrv := api.New(val.ClientCtx, logger.With("module", "api-server"))
-		app.RegisterAPIRoutes(apiSrv, val.AppConfig.API)
+
+		// Added by Yi
+		for _, app := range appMap {
+			app.RegisterAPIRoutes(apiSrv, val.AppConfig.API)
+		}
 
 		errCh := make(chan error)
 
@@ -98,18 +113,23 @@ func startInProcess(cfg Config, val *Validator) error {
 	}
 
 	if val.AppConfig.GRPC.Enable {
-		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC.Address)
-		if err != nil {
-			return err
-		}
-
-		val.grpc = grpcSrv
-
-		if val.AppConfig.GRPCWeb.Enable {
-			val.grpcWeb, err = servergrpc.StartGRPCWeb(grpcSrv, *val.AppConfig)
+		// Added by Yi
+		for _, app := range appMap {
+			grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC.Address)
 			if err != nil {
 				return err
 			}
+
+			val.grpc = grpcSrv
+
+			if val.AppConfig.GRPCWeb.Enable {
+				val.grpcWeb, err = servergrpc.StartGRPCWeb(grpcSrv, *val.AppConfig)
+				if err != nil {
+					return err
+				}
+			}
+
+			break   // Yi: only loop once
 		}
 	}
 
@@ -130,7 +150,8 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 
 		initCfg := genutiltypes.NewInitConfig(cfg.ChainID, gentxsDir, vals[i].NodeID, vals[i].PubKey)
 
-		genFile := tmCfg.GenesisFile()
+		chainID := "fake-chain-id"  // YITODO: we need a better way to get the chainID
+		genFile := tmCfg.GenesisFile(chainID)
 		genDoc, err := types.GenesisDocFromFile(genFile)
 		if err != nil {
 			return err

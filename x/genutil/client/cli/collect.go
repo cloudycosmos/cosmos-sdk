@@ -26,6 +26,11 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
 
+			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+			if chainID == "" {
+				chainID = "fake-chain-id"
+			}
+
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			cdc := clientCtx.Codec
 
@@ -36,7 +41,7 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 				return errors.Wrap(err, "failed to initialize node validator files")
 			}
 
-			genDoc, err := tmtypes.GenesisDocFromFile(config.GenesisFile())
+			genDoc, err := tmtypes.GenesisDocFromFile(config.GenesisFile(chainID))
 			if err != nil {
 				return errors.Wrap(err, "failed to read genesis doc from file")
 			}
@@ -44,7 +49,7 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 			genTxDir, _ := cmd.Flags().GetString(flagGenTxDir)
 			genTxsDir := genTxDir
 			if genTxsDir == "" {
-				genTxsDir = filepath.Join(config.RootDir, "config", "gentx")
+				genTxsDir = filepath.Join(config.RootDir, "config", "gentx", chainID)
 			}
 
 			toPrint := newPrintInfo(config.Moniker, genDoc.ChainID, nodeID, genTxsDir, json.RawMessage(""))

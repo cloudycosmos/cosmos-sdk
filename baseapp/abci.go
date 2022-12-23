@@ -28,13 +28,13 @@ import (
 func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain) {
 	// On a new chain, we consider the init chain block height as 0, even though
 	// req.InitialHeight is 1 by default.
-	initHeader := tmproto.Header{ChainID: req.ChainId, Time: req.Time}
+	initHeader := tmproto.Header{ChainID: app.chainID, Time: req.Time}
 
 	// If req.InitialHeight is > 1, then we set the initial version in the
 	// stores.
 	if req.InitialHeight > 1 {
 		app.initialHeight = req.InitialHeight
-		initHeader = tmproto.Header{ChainID: req.ChainId, Height: req.InitialHeight, Time: req.Time}
+		initHeader = tmproto.Header{ChainID: app.chainID, Height: req.InitialHeight, Time: req.Time}
 		err := app.cms.SetInitialVersion(req.InitialHeight)
 		if err != nil {
 			panic(err)
@@ -100,6 +100,7 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 		ConsensusParams: res.ConsensusParams,
 		Validators:      res.Validators,
 		AppHash:         appHash,
+		ChainID:         app.chainID,
 	}
 }
 
@@ -196,6 +197,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	}
 	// set the signed validators for addition to context in deliverTx
 	app.voteInfos = req.LastCommitInfo.GetVotes()
+	res.ChainID = app.chainID    // Added by Yi
 	return res
 }
 

@@ -76,6 +76,7 @@ func (ctx Context) Invoke(grpcCtx gocontext.Context, method string, req, reply i
 		Path:   method,
 		Data:   reqBz,
 		Height: ctx.Height,
+		ChainID: ctx.ChainID,
 	}
 
 	res, err := ctx.QueryABCI(abciReq)

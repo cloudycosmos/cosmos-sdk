@@ -48,7 +48,7 @@ type restoreDone struct {
 // 2) io.ReadCloser streams automatically propagate IO errors, and can pass arbitrary
 //    errors via io.Pipe.CloseWithError().
 type Manager struct {
-	store      *Store
+	store         *Store
 	multistore types.Snapshotter
 	extensions map[string]types.ExtensionSnapshotter
 

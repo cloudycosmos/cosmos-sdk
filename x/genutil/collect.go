@@ -62,7 +62,8 @@ func GenAppStateFromConfig(cdc codec.JSONCodec, txEncodingConfig client.TxEncodi
 	}
 
 	genDoc.AppState = appState
-	err = ExportGenesisFile(&genDoc, config.GenesisFile())
+	chainID := genDoc.ChainID
+	err = ExportGenesisFile(&genDoc, config.GenesisFile(chainID))
 
 	return appState, err
 }

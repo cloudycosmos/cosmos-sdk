@@ -8,6 +8,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
@@ -26,10 +27,15 @@ func ValidateGenesisCmd(mbm module.BasicManager) *cobra.Command {
 
 			cdc := clientCtx.Codec
 
+			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+			if chainID == "" {
+				chainID = "fake-chain-id"
+			}
+
 			// Load default if passed no args, otherwise load passed file
 			var genesis string
 			if len(args) == 0 {
-				genesis = serverCtx.Config.GenesisFile()
+				genesis = serverCtx.Config.GenesisFile(chainID)
 			} else {
 				genesis = args[0]
 			}

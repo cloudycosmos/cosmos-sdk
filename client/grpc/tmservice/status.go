@@ -13,5 +13,5 @@ func getNodeStatus(ctx context.Context, clientCtx client.Context) (*ctypes.Resul
 	if err != nil {
 		return &ctypes.ResultStatus{}, err
 	}
-	return node.Status(ctx)
+	return node.Status(ctx, clientCtx.ChainID)
 }

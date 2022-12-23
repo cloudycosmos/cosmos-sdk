@@ -125,7 +125,7 @@ func GetValidators(ctx context.Context, clientCtx client.Context, height *int64,
 		return ResultValidatorsOutput{}, err
 	}
 
-	validatorsRes, err := node.Validators(ctx, height, page, limit)
+	validatorsRes, err := node.Validators(ctx, clientCtx.ChainID, height, page, limit)
 	if err != nil {
 		return ResultValidatorsOutput{}, err
 	}
@@ -165,6 +165,10 @@ func ValidatorSetRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse block height")
 			return
+		}
+
+		if len(r.Header["X-Dbc-Chainid"]) == 1 {
+			clientCtx.ChainID = r.Header["X-Dbc-Chainid"][0]
 		}
 
 		chainHeight, err := GetChainHeight(clientCtx)

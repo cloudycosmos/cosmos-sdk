@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/spf13/cobra"
+	"github.com/gorilla/mux"
 
 	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
@@ -37,15 +38,16 @@ type resultStatus struct {
 // StatusCommand returns the command to return the status of the network.
 func StatusCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "status",
+		Use:   "status [chainID]",
 		Short: "Query remote node for status",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			status, err := getNodeStatus(clientCtx)
+			chainID := args[0]
+			status, err := getNodeStatus(clientCtx, chainID)
 			if err != nil {
 				return err
 			}
@@ -80,13 +82,13 @@ func StatusCommand() *cobra.Command {
 	return cmd
 }
 
-func getNodeStatus(clientCtx client.Context) (*ctypes.ResultStatus, error) {
+func getNodeStatus(clientCtx client.Context, chainID string) (*ctypes.ResultStatus, error) {
 	node, err := clientCtx.GetNode()
 	if err != nil {
 		return &ctypes.ResultStatus{}, err
 	}
 
-	return node.Status(context.Background())
+	return node.Status(context.Background(), chainID)
 }
 
 // NodeInfoResponse defines a response type that contains node status and version
@@ -100,7 +102,10 @@ type NodeInfoResponse struct {
 // REST handler for node info
 func NodeInfoRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		status, err := getNodeStatus(clientCtx)
+                vars := mux.Vars(r)
+                chainID := vars["chain_id"]    // YITODO: double check
+
+		status, err := getNodeStatus(clientCtx, chainID)
 		if rest.CheckInternalServerError(w, err) {
 			return
 		}
@@ -122,7 +127,10 @@ type SyncingResponse struct {
 // REST handler for node syncing
 func NodeSyncingRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		status, err := getNodeStatus(clientCtx)
+                vars := mux.Vars(r)
+                chainID := vars["chain_id"]    // YITODO: double check
+
+		status, err := getNodeStatus(clientCtx, chainID)
 		if rest.CheckInternalServerError(w, err) {
 			return
 		}
