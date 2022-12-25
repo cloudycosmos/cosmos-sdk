@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/spf13/cobra"
-	"github.com/gorilla/mux"
 
 	"github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/p2p"
@@ -47,7 +46,8 @@ func StatusCommand() *cobra.Command {
 			}
 
 			chainID := args[0]
-			status, err := getNodeStatus(clientCtx, chainID)
+			clientCtx.WithChainID(chainID)
+			status, err := getNodeStatus(clientCtx)
 			if err != nil {
 				return err
 			}
@@ -82,12 +82,12 @@ func StatusCommand() *cobra.Command {
 	return cmd
 }
 
-func getNodeStatus(clientCtx client.Context, chainID string) (*ctypes.ResultStatus, error) {
+func getNodeStatus(clientCtx client.Context) (*ctypes.ResultStatus, error) {
 	node, err := clientCtx.GetNode()
 	if err != nil {
 		return &ctypes.ResultStatus{}, err
 	}
-	myCtx := context.WithValue(context.Background(), "chain_id", chainID)
+	myCtx := context.WithValue(context.Background(), "chain_id", clientCtx.ChainID)
 	return node.Status(myCtx)
 }
 
@@ -102,10 +102,11 @@ type NodeInfoResponse struct {
 // REST handler for node info
 func NodeInfoRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-                vars := mux.Vars(r)
-                chainID := vars["chain_id"]    // YITODO: double check
+		if len(r.Header["X-Dbc-Chainid"]) == 1 {
+			clientCtx.ChainID = r.Header["X-Dbc-Chainid"][0]
+		}
 
-		status, err := getNodeStatus(clientCtx, chainID)
+		status, err := getNodeStatus(clientCtx)
 		if rest.CheckInternalServerError(w, err) {
 			return
 		}
@@ -127,10 +128,11 @@ type SyncingResponse struct {
 // REST handler for node syncing
 func NodeSyncingRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-                vars := mux.Vars(r)
-                chainID := vars["chain_id"]    // YITODO: double check
+		if len(r.Header["X-Dbc-Chainid"]) == 1 {
+			clientCtx.ChainID = r.Header["X-Dbc-Chainid"][0]
+		}
 
-		status, err := getNodeStatus(clientCtx, chainID)
+		status, err := getNodeStatus(clientCtx)
 		if rest.CheckInternalServerError(w, err) {
 			return
 		}

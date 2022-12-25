@@ -198,6 +198,10 @@ func LatestValidatorSetRequestHandlerFn(clientCtx client.Context) http.HandlerFu
 			return
 		}
 
+		if len(r.Header["X-Dbc-Chainid"]) == 1 {
+			clientCtx.ChainID = r.Header["X-Dbc-Chainid"][0]
+		}
+
 		output, err := GetValidators(r.Context(), clientCtx, nil, &page, &limit)
 		if rest.CheckInternalServerError(w, err) {
 			return
